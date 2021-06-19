@@ -6,6 +6,10 @@
 ![License](https://img.shields.io/github/license/rust-osdev/uefi-rs)
 ![Build status](https://github.com/rust-osdev/uefi-rs/workflows/Rust/badge.svg)
 
+This fork is for RISC-V UEFI support.
+
+[RISCV support](https://github.com/rust-osdev/uefi-rs/issues/241) issue
+
 ## Description
 
 [UEFI] is the successor to the BIOS. It provides an early boot environment for
