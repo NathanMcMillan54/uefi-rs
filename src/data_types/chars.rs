@@ -7,7 +7,6 @@ use core::convert::{TryFrom, TryInto};
 use core::fmt;
 
 /// Character conversion error
-#[derive(Clone, Copy, Debug)]
 pub struct CharConversionError;
 
 /// A Latin-1 character

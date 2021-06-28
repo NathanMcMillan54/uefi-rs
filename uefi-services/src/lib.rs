@@ -60,7 +60,7 @@ pub fn system_table() -> NonNull<SystemTable<Boot>> {
 ///
 /// This must be called as early as possible,
 /// before trying to use logging or memory allocation capabilities.
-pub fn init(st: &mut SystemTable<Boot>) -> Result {
+pub fn init(st: &SystemTable<Boot>) -> Result {
     unsafe {
         // Avoid double initialization.
         if SYSTEM_TABLE.is_some() {
@@ -71,8 +71,8 @@ pub fn init(st: &mut SystemTable<Boot>) -> Result {
         SYSTEM_TABLE = Some(st.unsafe_clone());
 
         // Setup logging and memory allocation
-        init_logger(st);
         let boot_services = st.boot_services();
+        init_logger(st);
         uefi::alloc::init(boot_services);
 
         // Schedule these tools to be disabled on exit from UEFI boot services
@@ -90,7 +90,7 @@ pub fn init(st: &mut SystemTable<Boot>) -> Result {
 ///
 /// This is unsafe because you must arrange for the logger to be reset with
 /// disable() on exit from UEFI boot services.
-unsafe fn init_logger(st: &mut SystemTable<Boot>) {
+unsafe fn init_logger(st: &SystemTable<Boot>) {
     let stdout = st.stdout();
 
     // Construct the logger.
@@ -154,46 +154,50 @@ fn panic_handler(info: &core::panic::PanicInfo) -> ! {
         }
     }
 
-    cfg_if! {
-        if #[cfg(all(target_arch = "x86_64", feature = "qemu"))] {
-            // If running in QEMU, use the f4 exit port to signal the error and exit
-            use qemu_exit::QEMUExit;
-            let custom_exit_success = 3;
-            let qemu_exit_handle = qemu_exit::X86::new(0xF4, custom_exit_success);
-            qemu_exit_handle.exit_failure();
-        } else {
-            // If the system table is available, use UEFI's standard shutdown mechanism
-            if let Some(st) = unsafe { SYSTEM_TABLE.as_ref() } {
-                use uefi::table::runtime::ResetType;
-                st.runtime_services()
-                    .reset(ResetType::Shutdown, uefi::Status::ABORTED, None);
-            }
-
-            // If we don't have any shutdown mechanism handy, the best we can do is loop
-            error!("Could not shut down, please power off the system manually...");
-
-            cfg_if! {
-                if #[cfg(target_arch = "x86_64")] {
-                    loop {
-                        unsafe {
-                            // Try to at least keep CPU from running at 100%
-                            asm!("hlt", options(nomem, nostack));
-                        }
-                    }
-                } else if #[cfg(target_arch = "aarch64")] {
-                    loop {
-                        unsafe {
-                            // Try to at least keep CPU from running at 100%
-                            asm!("hlt 420", options(nomem, nostack));
-                        }
-                    }
-                } else {
-                    loop {
-                        // just run forever dammit how do you return never anyway
-                    }
-                }
+    // If running in QEMU, use the f4 exit port to signal the error and exit
+    if cfg!(feature = "qemu") {
+        cfg_if! {
+            if #[cfg(target_arch = "x86_64")] {
+                use qemu_exit::QEMUExit;
+                let custom_exit_success = 3;
+                let qemu_exit_handle = qemu_exit::X86::new(0xF4, custom_exit_success);
+                qemu_exit_handle.exit_failure();
+            } else if #[cfg(target_arch = "aarch64")] {
+                // unimplemented!();
             }
         }
+    }
+
+    // If the system table is available, use UEFI's standard shutdown mechanism
+    if let Some(st) = unsafe { SYSTEM_TABLE.as_ref() } {
+        use uefi::table::runtime::ResetType;
+        st.runtime_services()
+            .reset(ResetType::Shutdown, uefi::Status::ABORTED, None);
+    }
+
+    // If we don't have any shutdown mechanism handy, the best we can do is loop
+    error!("Could not shut down, please power off the system manually...");
+
+    cfg_if! {
+      if #[cfg(target_arch = "x86_64")] {
+          loop {
+              unsafe {
+                  // Try to at least keep CPU from running at 100%
+                  asm!("hlt",options(nomem,nostack));
+              }
+          }
+      } else if #[cfg(target_arch = "aarch64")] {
+          loop {
+              unsafe {
+                  // Try to at least keep CPU from running at 100%
+                  asm!("hlt 420",options(nomem,nostack));
+              }
+          }
+      } else {
+          loop {
+            // just run forever dammit how do you return never anyway
+          }
+      }
     }
 }
 

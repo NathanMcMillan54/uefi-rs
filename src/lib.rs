@@ -25,10 +25,10 @@
 
 #![cfg_attr(feature = "exts", feature(allocator_api, alloc_layout_extra))]
 #![feature(auto_traits)]
-#![feature(control_flow_enum)]
-#![feature(try_trait_v2)]
+#![feature(try_trait)]
 #![feature(abi_efiapi)]
 #![feature(negative_impls)]
+#![feature(const_fn)]
 #![feature(const_panic)]
 #![no_std]
 // Enable some additional warnings and lints.

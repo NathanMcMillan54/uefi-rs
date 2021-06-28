@@ -1,11 +1,9 @@
 //! UEFI services available during boot.
 
 use super::Header;
-use crate::data_types::Align;
-use crate::proto::{device_path::DevicePath, Protocol};
-#[cfg(feature = "exts")]
-use crate::proto::{loaded_image::LoadedImage, media::fs::SimpleFileSystem};
-use crate::{Char16, Event, Guid, Handle, Result, Status};
+use crate::proto::{device_path::DevicePath, loaded_image::LoadedImage, Protocol};
+use crate::{data_types::Align, proto::media::fs::SimpleFileSystem};
+use crate::{Event, Guid, Handle, Result, Status};
 #[cfg(feature = "exts")]
 use alloc_api::vec::Vec;
 use bitflags::bitflags;
@@ -83,21 +81,10 @@ pub struct BootServices {
     install_configuration_table: usize,
 
     // Image services
-    load_image: unsafe extern "efiapi" fn(
-        boot_policy: u8,
-        parent_image_handle: Handle,
-        device_path: *const DevicePath,
-        source_buffer: *const u8,
-        source_size: usize,
-        *mut Handle,
-    ) -> Status,
-    start_image: unsafe extern "efiapi" fn(
-        image_handle: Handle,
-        exit_data_size: *mut usize,
-        exit_data: &mut *mut Char16,
-    ) -> Status,
+    load_image: usize,
+    start_image: usize,
     exit: usize,
-    unload_image: extern "efiapi" fn(image_handle: Handle) -> Status,
+    unload_image: usize,
     exit_boot_services:
         unsafe extern "efiapi" fn(image_handle: Handle, map_key: MemoryMapKey) -> Status,
 
@@ -443,44 +430,6 @@ impl BootServices {
         }
     }
 
-    /// Load an EFI image from a buffer.
-    pub fn load_image_from_buffer(
-        &self,
-        parent_image_handle: Handle,
-        source_buffer: &[u8],
-    ) -> Result<Handle> {
-        unsafe {
-            let boot_policy = 0;
-            let device_path = ptr::null();
-            let source_size = source_buffer.len();
-            let mut image_handle = Handle::uninitialized();
-            (self.load_image)(
-                boot_policy,
-                parent_image_handle,
-                device_path,
-                source_buffer.as_ptr(),
-                source_size,
-                &mut image_handle,
-            )
-            .into_with_val(|| image_handle)
-        }
-    }
-
-    /// Unload an EFI image.
-    pub fn unload_image(&self, image_handle: Handle) -> Result {
-        (self.unload_image)(image_handle).into()
-    }
-
-    /// Transfer control to a loaded image's entry point.
-    pub fn start_image(&self, image_handle: Handle) -> Result {
-        unsafe {
-            // TODO: implement returning exit data to the caller.
-            let mut exit_data_size: usize = 0;
-            let mut exit_data: *mut Char16 = ptr::null_mut();
-            (self.start_image)(image_handle, &mut exit_data_size, &mut exit_data).into()
-        }
-    }
-
     /// Exits the UEFI boot services
     ///
     /// This unsafe method is meant to be an implementation detail of the safe
@@ -575,7 +524,7 @@ impl BootServices {
     ///
     /// This function is unsafe as it can be used to violate most safety
     /// invariants of the Rust type system.
-    pub unsafe fn set_mem(&self, buffer: *mut u8, size: usize, value: u8) {
+    pub unsafe fn memset(&self, buffer: *mut u8, size: usize, value: u8) {
         (self.set_mem)(buffer, size, value);
     }
 }

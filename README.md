@@ -1,14 +1,12 @@
 # uefi-rs
 
+My fork of [``uefi-rs``](https://github.com/rust-osdev/uefi-rs)
+
 [![Crates.io](https://img.shields.io/crates/v/uefi)](https://crates.io/crates/uefi)
 [![Docs.rs](https://docs.rs/uefi/badge.svg)](https://docs.rs/uefi)
 ![Stars](https://img.shields.io/github/stars/rust-osdev/uefi-rs)
 ![License](https://img.shields.io/github/license/rust-osdev/uefi-rs)
 ![Build status](https://github.com/rust-osdev/uefi-rs/workflows/Rust/badge.svg)
-
-This fork is for RISC-V UEFI support.
-
-[RISCV support](https://github.com/rust-osdev/uefi-rs/issues/241) issue
 
 ## Description
 
