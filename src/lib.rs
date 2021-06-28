@@ -53,7 +53,7 @@ pub mod proto;
 
 pub mod prelude;
 
-#[cfg(feature = "alloc")]
+#[cfg(not(feature = "no_alloc"))]
 pub mod alloc;
 
 #[cfg(feature = "exts")]

@@ -23,7 +23,7 @@ is-it-maintained-open-issues = { repository = "rust-osdev/uefi-rs" }
 
 [features]
 default = []
-alloc = []
+no_alloc = []
 exts = []
 logger = []
 # Ignore text output errors in logger as a workaround for firmware issues that
