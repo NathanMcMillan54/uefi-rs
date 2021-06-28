@@ -201,6 +201,7 @@ fn panic_handler(info: &core::panic::PanicInfo) -> ! {
     }
 }
 
+#[cfg(not(feature = "no_alloc_handler"))]
 #[alloc_error_handler]
 fn out_of_memory(layout: ::core::alloc::Layout) -> ! {
     panic!(

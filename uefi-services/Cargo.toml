@@ -23,4 +23,5 @@ qemu-exit = "1.0.2"
 [features]
 # Enable QEMU-specific functionality
 qemu = []
+no_alloc_handler = []
 no_panic_handler = []
